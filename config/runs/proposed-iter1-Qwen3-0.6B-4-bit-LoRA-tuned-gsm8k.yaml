@@ -1,0 +1,56 @@
+run_id: proposed-iter1-Qwen3-0.6B-4-bit-LoRA-tuned-gsm8k
+method: proposed
+model:
+  name: Qwen/Qwen3-0.6B
+  precision: 4bit
+  adapter:
+    type: lora
+    r: 64
+    alpha: 16
+    dropout: 0.05
+dataset:
+  name: gsm8k
+  config: main
+  max_seq_length: 512
+  text_column: question
+  label_column: answer
+  pack_sequences: true
+training:
+  epochs: 3
+  batch_size: 1                 # real batch per device
+  gradient_accumulation_steps: 8 # effective batch = 8
+  optimizer:
+    type: adamw
+    learning_rate: 2e-5         # global LR before scaling
+    weight_decay: 0.1
+    betas: [0.9, 0.999]
+    eps: 1e-8
+  scheduler:
+    type: cosine
+    warmup_steps: 500
+  layer_lr_scaling:
+    enabled: true
+    beta: 0.9                   # lr_l(t)=lr_global(t)*beta^(L-l)
+    strategy: exponential_depth
+evaluation:
+  decoding_temperature: 0.0
+  strategy: greedy
+hardware:
+  device: cpu
+  max_memory_mb: 500
+optuna:
+  n_trials: 30
+  direction: maximize  # maximise GSM8K accuracy
+  search_space:
+    learning_rate:
+      type: loguniform
+      low: 1e-5
+      high: 5e-5
+    weight_decay:
+      type: uniform
+      low: 0.0
+      high: 0.1
+    beta:
+      type: uniform
+      low: 0.7
+      high: 0.95

@@ -1,0 +1,19 @@
+defaults:
+  - _self_
+
+run: "???"            # supplied via CLI – points to YAML in config/runs
+mode: full             # full | trial (overridden via CLI)
+results_dir: ./results
+
+wandb:
+  entity: gengaru617-personal
+  project: 2025-11-17
+  mode: online         # switched to disabled in trial
+
+# stub sections – will be overwritten by run-specific YAML ---------------------
+model: {}
+dataset: {}
+training:
+  max_train_batches: null
+optuna:
+  n_trials: 0
