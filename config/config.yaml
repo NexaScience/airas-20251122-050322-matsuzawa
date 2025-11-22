@@ -2,6 +2,8 @@ defaults:
   - _self_
 
 run: "???"            # supplied via CLI – points to YAML in config/runs
+run_id: null           # will be set by run-specific YAML
+method: null           # will be set by run-specific YAML
 mode: full             # full | trial (overridden via CLI)
 results_dir: ./results
 
@@ -15,5 +17,7 @@ model: {}
 dataset: {}
 training:
   max_train_batches: null
+evaluation: {}
+hardware: {}
 optuna:
   n_trials: 0
