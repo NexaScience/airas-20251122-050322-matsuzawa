@@ -16,7 +16,8 @@ def main(cfg: DictConfig):
         raise FileNotFoundError(run_cfg_path)
 
     # Build composed cfg to inspect/override here (does not propagate to train)
-    full_cfg = OmegaConf.merge(cfg, OmegaConf.load(run_cfg_path))
+    with open_dict(cfg):
+        full_cfg = OmegaConf.merge(cfg, OmegaConf.load(run_cfg_path))
     with open_dict(full_cfg):
         if full_cfg.mode == "trial":
             full_cfg.wandb.mode = "disabled"
