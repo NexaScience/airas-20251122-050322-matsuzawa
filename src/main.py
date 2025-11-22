@@ -1,4 +1,5 @@
 """Hydra orchestrator – spawns src.train in a subprocess."""
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -32,6 +33,11 @@ def main(cfg: DictConfig):
     OmegaConf.save(full_cfg, composed_path)
 
     # Spawn training subprocess (uses hydra again inside)
+    # Add parent directory to PYTHONPATH so src package can be found
+    env = dict(os.environ)
+    parent_dir = str(Path(__file__).resolve().parent.parent)
+    env["PYTHONPATH"] = parent_dir + os.pathsep + env.get("PYTHONPATH", "")
+
     cmd = [
         sys.executable,
         "-u",
@@ -42,7 +48,7 @@ def main(cfg: DictConfig):
         f"mode={cfg.mode}",
     ]
     print("Launching:", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True, env=env, cwd=parent_dir)
 
     composed_path.unlink(missing_ok=True)
 
