@@ -9,3 +9,14 @@ trainable params: 18,350,080 || all params: 614,400,000 || trainable%: 2.9867
 Epoch 0: val_acc=0.0000 | test_acc=0.0000
 === [TRIAL RUN] PASSED for proposed-iter1-Qwen3-0.6B-4-bit-LoRA-tuned-gsm8k at Sat Nov 22 05:45:35 UTC 2025 ===
 
+=== [UV SYNC] Start at Sat Nov 22 05:46:00 UTC 2025 ===
+=== [UV SYNC] Finished successfully at Sat Nov 22 05:46:35 UTC 2025 ===
+=== [TRIAL RUN] Start for comparative-1-iter1-Qwen3-0.6B-4-bit-LoRA-tuned-gsm8k at Sat Nov 22 05:46:35 UTC 2025 ===
+Launching: /home/runner/work/airas-20251122-050322-matsuzawa/airas-20251122-050322-matsuzawa/.venv/bin/python3 -u -m src.train run=comparative-1-iter1-Qwen3-0.6B-4-bit-LoRA-tuned-gsm8k results_dir=.research/iteration1 mode=trial
+[WARN] 4-bit quantisation requested but CUDA not available – falling back to fp16.
+trainable params: 18,350,080 || all params: 614,400,000 || trainable%: 2.9867
+[2025-11-22 05:47:02,226][transformers.tokenization_utils_base][WARNING] - You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[2025-11-22 05:47:05,100][transformers.generation.configuration_utils][WARNING] - The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Epoch 0: val_acc=0.0000 | test_acc=0.0000
+=== [TRIAL RUN] PASSED for comparative-1-iter1-Qwen3-0.6B-4-bit-LoRA-tuned-gsm8k at Sat Nov 22 05:53:30 UTC 2025 ===
+
