@@ -187,6 +187,11 @@
       "expected_result": "Baseline fine-tuning (global LR): ~55% GSM8K accuracy, occasional training instability after epoch 2.\nALLRS (β=0.9): expected 58-60% accuracy (+3-5 points) with smoother validation loss curve and no extra compute cost. Per-token perplexity should drop ~3% relative to baseline by the end of training.",
       "expected_conclusion": "A single multiplicative depth factor (β) is enough to rectify the imbalance of updates across transformer layers. This minimal change is trivial to implement, adds negligible overhead, and empirically improves GSM8K accuracy by several points, demonstrating that careful layer-wise learning-rate allocation is a practical lever for boosting mathematical reasoning in LLM fine-tuning."
     },
-    "iterations": []
+    "iterations": [
+      {
+        "iteration_id": 1,
+        "method": "Adaptive Layer-wise Learning-Rate Scaling (ALLRS)\nModification: keep the standard warm-up + cosine decay schedule, but multiply the learning rate of each transformer block ℓ by an exponential depth factor β^(L-ℓ), where L is the index of the last block and 0<β≤1 (e.g. β=0.9). Thus\n    lr_ℓ(t) = lr_global(t) * β^(L-ℓ)\nOnly one additional hyper-parameter (β) is introduced.\nMotivation: Upper layers capture task-specific features and already change quickly; lower layers store general linguistic/mathematical priors and should change more cautiously. Exponentially damped LR prevents over-fitting at the top while still allowing gradual adaptation of the bottom, improving reasoning consistency with minimal implementation effort."
+      }
+    ]
   }
 }
