@@ -202,7 +202,8 @@ def main(cfg: DictConfig):
     run_cfg_path = Path(__file__).resolve().parent.parent / "config" / "runs" / f"{cfg.run}.yaml"
     if not run_cfg_path.exists():
         raise FileNotFoundError(run_cfg_path)
-    cfg = OmegaConf.merge(cfg, OmegaConf.load(run_cfg_path))
+    with open_dict(cfg):
+        cfg = OmegaConf.merge(cfg, OmegaConf.load(run_cfg_path))
 
     _apply_mode_overrides(cfg)
     _set_seed(42)
