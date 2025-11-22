@@ -190,7 +190,58 @@
     "iterations": [
       {
         "iteration_id": 1,
-        "method": "Adaptive Layer-wise Learning-Rate Scaling (ALLRS)\nModification: keep the standard warm-up + cosine decay schedule, but multiply the learning rate of each transformer block ℓ by an exponential depth factor β^(L-ℓ), where L is the index of the last block and 0<β≤1 (e.g. β=0.9). Thus\n    lr_ℓ(t) = lr_global(t) * β^(L-ℓ)\nOnly one additional hyper-parameter (β) is introduced.\nMotivation: Upper layers capture task-specific features and already change quickly; lower layers store general linguistic/mathematical priors and should change more cautiously. Exponentially damped LR prevents over-fitting at the top while still allowing gradual adaptation of the bottom, improving reasoning consistency with minimal implementation effort."
+        "method": "Adaptive Layer-wise Learning-Rate Scaling (ALLRS)\nModification: keep the standard warm-up + cosine decay schedule, but multiply the learning rate of each transformer block ℓ by an exponential depth factor β^(L-ℓ), where L is the index of the last block and 0<β≤1 (e.g. β=0.9). Thus\n    lr_ℓ(t) = lr_global(t) * β^(L-ℓ)\nOnly one additional hyper-parameter (β) is introduced.\nMotivation: Upper layers capture task-specific features and already change quickly; lower layers store general linguistic/mathematical priors and should change more cautiously. Exponentially damped LR prevents over-fitting at the top while still allowing gradual adaptation of the bottom, improving reasoning consistency with minimal implementation effort.",
+        "experimental_design": {
+          "experiment_summary": "Goal: show that Adaptive Layer-wise Learning-Rate Scaling (ALLRS) yields higher answer-accuracy on elementary maths word-problems than the usual single global learning-rate.\nTask: given a GSM8K problem in natural language, generate a step-by-step chain-of-thought that ends with the correct numeric answer. The prediction is considered correct only if the final number exactly matches the gold answer.\nWorkflow:\n1. Load Qwen3-0.6B in 4-bit quantised format to stay inside the 500 MB RAM cap.\n2. Add LoRA adapters to all self-attention and MLP blocks so only ~6 M parameters are trainable.\n3. Prepare the GSM8K train / test splits; tokenise with the Qwen3 tokenizer; pack to 512-token sequences.\n4. Train for 1 epoch with gradient-accumulation to simulate batch-size 8.\n   • Baseline run: AdamW + warm-up 10 % steps + cosine decay, single global learning-rate.\n   • Proposed run: identical schedule but per-block rate lr_l(t)=lr_global(t)·β^(L-l) with β searched in [0.7,0.95].  Implementation: keep one AdamW optimiser, but store a constant lr_scale in every param-group and multiply the scheduler-produced LR by that factor each step.\n5. Decode each test question greedily (temperature 0) and strip everything after the first ‘####’ token to obtain the predicted answer string.\n6. Compute metrics; plot training-loss curves for stability comparison.\n7. Compare final accuracy and learning-curve smoothness; expect +3-5 pp accuracy for ALLRS without extra compute.",
+          "evaluation_metrics": [
+            {
+              "name": "accuracy",
+              "description": "Correctness criteria: a prediction is correct if the substring after the first token sequence \"####\" in the model output, stripped of whitespace, exactly equals the gold numeric answer string; for fractional answers the comparison is performed on the unreduced fraction so 3/6≠1/2.\nCalculation: accuracy = (#correct predictions)/(#total test questions).\nTask appropriateness: GSM8K is a single-answer task where each example has one canonical numeric solution; therefore simple accuracy directly measures problem-solving success.\nVisualisations: bar chart comparing baseline vs ALLRS accuracies; 95 % binomial confidence intervals overlaid."
+            },
+            {
+              "name": "training_loss",
+              "description": "Correctness criteria: not applicable; this is a descriptive curve.\nCalculation: at every optimisation step record the cross-entropy loss returned by the model; after training, smooth with an exponential moving average (α=0.98) and plot step vs loss.\nTask appropriateness: reveals optimisation stability; a smoother, monotonically decreasing curve indicates better-behaved updates, which ALLRS claims to deliver.\nVisualisations: line plot of smoothed loss for baseline and ALLRS runs on the same axes."
+            }
+          ],
+          "proposed_method": "Adaptive Layer-wise Learning-Rate Scaling (ALLRS)\nObjective: mitigate catastrophic forgetting in upper layers and under-adaptation in lower layers during fine-tuning by assigning smaller learning-rates to deeper (closer to embeddings) transformer blocks.\nTheory: let the standard scheduler output a global rate lr_g(t).  For a model with last layer index L, block ℓ uses lr_ℓ(t)=lr_g(t)·β^(L-ℓ), with damping factor 0<β≤1.  Exponential decay maintains the ratio of consecutive layers’ step-sizes, leading to gradient norms that vary smoothly with depth.\nImplementation steps:\n1. Traverse model.named_parameters(); group parameters by transformer block index ℓ, assign constant multiplier β^(L-ℓ) to that group (embeddings, final LN and lm_head get scale 1).\n2. Create a single AdamW optimiser where each param-group stores the field \"lr_scale\".\n3. At every scheduler step, set group[\"lr\"] = scheduler_lr * group[\"lr_scale\"].  No other change to training loop.\n4. Only one new hyper-parameter β is introduced, making grid-search inexpensive.\n5. Compatible with LoRA (only adapter weights receive scaled rates) and with any optimiser that exposes per-group learning-rates.",
+          "comparative_methods": [
+            "Standard Fine-tuning with single global learning-rate schedule"
+          ],
+          "models_to_use": [
+            "Qwen3-0.6B (4-bit LoRA-tuned)"
+          ],
+          "datasets_to_use": [
+            "gsm8k"
+          ],
+          "hyperparameters_to_search": [
+            {
+              "name": "beta",
+              "range": "0.7-0.95"
+            },
+            {
+              "name": "learning_rate",
+              "range": "1e-5-5e-5"
+            },
+            {
+              "name": "weight_decay",
+              "range": "0-0.1"
+            }
+          ]
+        },
+        "experiment_runs": [
+          {
+            "run_id": "proposed-iter1-Qwen3-0.6B-4-bit-LoRA-tuned-gsm8k",
+            "method_name": "proposed",
+            "model_name": "Qwen3-0.6B (4-bit LoRA-tuned)",
+            "dataset_name": "gsm8k"
+          },
+          {
+            "run_id": "comparative-1-iter1-Qwen3-0.6B-4-bit-LoRA-tuned-gsm8k",
+            "method_name": "comparative-1",
+            "model_name": "Qwen3-0.6B (4-bit LoRA-tuned)",
+            "dataset_name": "gsm8k"
+          }
+        ]
       }
     ]
   }
